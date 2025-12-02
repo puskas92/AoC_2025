@@ -7,8 +7,8 @@ Console.WriteLine("AoC 2025");
 
 var sw = new Stopwatch();
 sw.Start();
-Day01.Day01_Main();
-
+//Day01.Day01_Main();
+Day02.Day02_Main();
 
 
 
