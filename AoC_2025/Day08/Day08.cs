@@ -45,77 +45,54 @@ namespace AoC_2025
 
         public static (int, long) Day08_Part12(Day08_Input input, int iteration)
         {
-            var distanceTable = new List<(Point3D from, Point3D to, long distance)>();
-            var visitedSet = new HashSet<Point3D>();
-          
-            foreach (var point in input)
-            {
-                visitedSet.Add(point);
-                foreach (var otherPoint in input)
-                {
-                    if (visitedSet.Contains(otherPoint)) continue;
-              
-                    long distance = (long)Math.Pow(point.X - otherPoint.X, 2) + (long)Math.Pow(point.Y - otherPoint.Y, 2) + (long)Math.Pow(point.Z - otherPoint.Z, 2);
-                    distanceTable.Add((point, otherPoint, distance));
+            var distanceTable = new PriorityQueue<(Point3D from, Point3D to), long>();
 
+            for(var i = 0; i<input.Count-1; i++)
+            {
+                for (var j = i+1; j<input.Count; j++)
+                {
+                    var point1 = input[i];
+                    var point2 = input[j];
+                    long distance = ((long)point1.X - point2.X)*((long)point1.X - point2.X) + ((long)point1.Y - point2.Y)* ((long)point1.Y - point2.Y) + ((long)point1.Z - point2.Z)* ((long)point1.Z - point2.Z);
+                    distanceTable.Enqueue((point1, point2), distance);
                 }
             }
-            
      
 
-            var circuits = new List<List<Point3D>>();
+            var circuits = new List<HashSet<Point3D>>();
             foreach(var point in input)
             {
-                circuits.Add(new List<Point3D>() { point });
+                circuits.Add(new HashSet<Point3D>() { point });
             }
-            var usedPairs = new HashSet<(Point3D, Point3D)>();
 
             var count = 0;
             var part1Result = 0;
             var part2Result = 0;
-            foreach (var entry in distanceTable.OrderBy(t => t.distance))
+            while (distanceTable.Count>0)
             {
-                if (usedPairs.Contains((entry.from, entry.to)) || usedPairs.Contains((entry.to, entry.from)))
-                {
-                    continue;
-                }
-                usedPairs.Add((entry.from, entry.to));
+                var (from, to) = distanceTable.Dequeue();
                 count++;
 
-                var circuitsThatContains = circuits.FindAll(f => f.Contains(entry.from) || f.Contains(entry.to));
+                var circuitsThatContains = circuits.FindAll(f => f.Contains(from) || f.Contains(to));
                 switch (circuitsThatContains.Count())
                 {
                     case 2:
-                        //if (circuitsThatContains[1] is null) throw new Exception;
-                        foreach (var circuitelements in circuitsThatContains[1])
-                        {
-                            circuitsThatContains[0].Add(circuitelements);
-                        }
-                        if (!circuitsThatContains[0].Contains(entry.from))
-                        {
-                            circuitsThatContains[0].Add(entry.from);
-                        }
-                        if (!circuitsThatContains[0].Contains(entry.to))
-                        {
-                            circuitsThatContains[0].Add(entry.to);
-                        }
-
+                        circuitsThatContains[0].UnionWith(circuitsThatContains[1]);
+                        circuitsThatContains[0].Add(from);
+                        circuitsThatContains[0].Add(to);
+                        
                         circuits.Remove(circuitsThatContains[1]);
 
                         break;
                     case 1:
-                        var circuit = circuits.First(f => f.Contains(entry.from) || f.Contains(entry.to));
-                        if (!circuit.Contains(entry.from))
-                        {
-                            circuit.Add(entry.from);
-                        }
-                        if (!circuit.Contains(entry.to))
-                        {
-                            circuit.Add(entry.to);
-                        }
+                        var circuit = circuits.First(f => f.Contains(from) || f.Contains(to));
+                       
+                        circuit.Add(from);
+                        circuit.Add(to);
+                   
                         break;
                     case 0:
-                        circuits.Add(new List<Point3D>() { entry.from, entry.to });
+                        circuits.Add(new HashSet<Point3D>() { from, to });
                         break;
                     default:
                         throw new Exception();
@@ -124,7 +101,7 @@ namespace AoC_2025
 
                 if(count==iteration) part1Result = circuits.OrderByDescending(f => f.Count).Take(3).Aggregate(1, (acc, val) => acc * val.Count);
                 if (circuits.Count == 1) {
-                    part2Result = entry.from.X * entry.to.X;
+                    part2Result = from.X * to.X;
                     break;
                 }
             }
