@@ -93,7 +93,7 @@ namespace AoC_2025
                 //if (area > polygonArea) continue; // if the area is larger than the polygon area, it cannot be the answer
 
                 // Check if the rectangle defined by start and end fully inside the polygon
-                if (RectangleContainsPolygon(start, end, input)) continue;
+                if (Day09_RectangleContainsPolygon(start, end, input)) continue;
                 if (RectangleInterSectedByThePolygon(start, end, input)) continue;
 
                 //Check if the rectangle is inside of the polygon
@@ -185,7 +185,7 @@ namespace AoC_2025
             return false;
         }
 
-        private static bool RectangleContainsPolygon(Point start, Point end, Day09_Input polygon)
+        public static bool Day09_RectangleContainsPolygon(Point start, Point end, Day09_Input polygon)
         {
             int minX = Math.Min(start.X, end.X);
             int maxX = Math.Max(start.X, end.X);
@@ -234,6 +234,21 @@ namespace AoC_2025
         public static void Day09Part2Test(string rawinput, int expectedValue)
         {
             Assert.Equal(expectedValue, Day09.Day09_Part12(Day09.Day09_ReadInput(rawinput)).Item2);
+        }
+
+        [Theory]
+        [InlineData(1,1, 10,10, 2,2, true)]
+        [InlineData(1, 1, 10, 10, 9, 9, true)]
+        [InlineData(1, 1, 10, 10, -1, 2, false)]
+        [InlineData(1, 1, 10, 10, 2, -1, false)]
+        [InlineData(1, 1, 10, 10, -1, -1, false)]
+        [InlineData(1, 1, 10, 10, 1, 1, false)]
+        [InlineData(1, 1, 10, 10, 1, 10, false)]
+        [InlineData(1, 1, 10, 10, 10, 1, false)]
+        [InlineData(1, 1, 10, 10, 10, 10, false)]
+        public static void Day09RectangleContainsPolygonTest(int RectStartX, int RectStartY, int RectEndX, int RectEndY, int PointToTestX, int PointToTestY, bool expectedResult)
+        {
+            Assert.Equal(expectedResult, Day09.Day09_RectangleContainsPolygon(new Point(RectStartX, RectStartY), new Point(RectEndX, RectEndY), new Day09.Day09_Input { new Point(PointToTestX, PointToTestY) }));
         }
     }
 }
