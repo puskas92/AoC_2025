@@ -89,10 +89,17 @@ namespace AoC_2025
                 if (RectangleInterSectedByThePolygon(start, end, input)) continue;
 
                 //Check if the rectangle is inside of the polygon
-
+                //var testInput = new Day09_Input();
+                //for(var i = input.IndexOf(start); i <= input.IndexOf(end); i++)
+                //{
+                //    testInput.Add(input[i]);
+                //}
+                //testInput.Add(new Point(end.X, start.Y));
+                //var testArea = CalculateArea(testInput);
+                //if (dir == Math.Sign(testArea)) continue;
 
                 long rectangleArea = (long)Math.Abs((long)start.X - end.X + 1) * (long)Math.Abs((long)start.Y - end.Y + 1);
-                return (maxArea, rectangleArea);
+                return (maxArea, rectangleArea); //1550726012 too low
             }
 
             return (maxArea, 0);
@@ -126,7 +133,7 @@ namespace AoC_2025
             // Helper function to check orientation
             int Orientation(Point p, Point q, Point r)
             {
-                int val = (q.Y - p.Y) * (r.X - q.X) - (q.X - p.X) * (r.Y - q.Y);
+                long val = ((long)q.Y - p.Y) * ((long)r.X - q.X) - ((long)q.X - p.X) * ((long)r.Y - q.Y);
                 if (val == 0) return 0; // colinear
                 return (val > 0) ? 1 : 2; // clock or counterclock wise
             }
