@@ -50,11 +50,16 @@ namespace AoC_2025
             {
                 for(var j = i+1; j < input.Count; j++)
                 {
-                    long area = (long)Math.Abs((long)input[i].X - input[j].X +1) * (long)Math.Abs((long)input[i].Y - input[j].Y +1);
+                    long area = CalculateRectangleArea(input[i], input[j]);
                     maxArea = Math.Max(maxArea, area);
                 }
             }
             return maxArea;
+        }
+
+        private static long CalculateRectangleArea(Point p1, Point p2 )
+        {
+            return ((long)Math.Abs((long)p1.X - (long)p2.X) + 1) * ((long)Math.Abs((long)p1.Y - (long)p2.Y) + 1);
         }
 
         public static (long, long) Day09_Part12(Day09_Input input)
@@ -62,52 +67,53 @@ namespace AoC_2025
             var maxAreas = new PriorityQueue<(Point start, Point end), long>();
             long maxArea = 0;
 
-            for (var i = 0; i < input.Count - 1; i++)
+            for (var i = 0; i < input.Count-1; i++)
             {
-                for (var j = i + 1; j < input.Count; j++)
+                for (var j =i+1; j < input.Count; j++)
                 {
-                   long area = (long)Math.Abs((long)input[i].X - input[j].X + 1) * (long)Math.Abs((long)input[i].Y - input[j].Y + 1);
-                   maxAreas.Enqueue((input[i], input[j]), -area);
+                    long area = CalculateRectangleArea(input[i], input[j]);
+                    maxAreas.Enqueue((input[i], input[j]), -area);
                     maxArea = Math.Max(maxArea, area);
                 }
             }
-            for (var i = 0; i < input.Count - 1; i++)
-            {
-                if (input[i + 1].X - input[i].X == 1 || input[i+1].Y - input[i].Y == 1)
-                {
-                    //it is not handled if a section goes into the area, and immediately turn back. Theoretically this is allowed
-                    throw new Exception();
-                }
-            }
 
-                var polygonArea = CalculateArea(input);
-            var dir = Math.Sign(polygonArea);
-            polygonArea = Math.Abs(polygonArea);
+            //for (var i = 0; i < input.Count - 1; i++)
+            //{
+            //    if (input[i + 1].X - input[i].X == 1 || input[i+1].Y - input[i].Y == 1)
+            //    {
+            //        //it is not handled if a section goes into the area, and immediately turn back. Theoretically this is allowed
+            //        throw new Exception();
+            //    }
+            //}
+
+            //var polygonArea = CalculateArea(input);
+            //var dir = Math.Sign(polygonArea);
+            //polygonArea = Math.Abs(polygonArea);
 
             while (maxAreas.Count > 0)
             {
                 var (start, end) = maxAreas.Dequeue();
 
                 //this does not help
-                //long area = (long)Math.Abs((long)start.X - end.X + 1) * (long)Math.Abs((long)start.Y - end.Y + 1);
+                //long area = CalculateRectangleArea(start, end);
                 //if (area > polygonArea) continue; // if the area is larger than the polygon area, it cannot be the answer
 
                 // Check if the rectangle defined by start and end fully inside the polygon
                 if (Day09_RectangleContainsPolygon(start, end, input)) continue;
                 if (RectangleInterSectedByThePolygon(start, end, input)) continue;
-
+         
                 //Check if the rectangle is inside of the polygon
                 //var testInput = new Day09_Input();
-                //for(var i = input.IndexOf(start); i <= input.IndexOf(end); i++)
+                //for (var i = input.IndexOf(start); i <= input.IndexOf(end); i++)
                 //{
                 //    testInput.Add(input[i]);
                 //}
                 //testInput.Add(new Point(end.X, start.Y));
                 //var testArea = CalculateArea(testInput);
-                //if (dir == Math.Sign(testArea)) continue;
+                //if (dir != Math.Sign(testArea)) continue;
 
-                long rectangleArea = (long)Math.Abs((long)start.X - end.X + 1) * (long)Math.Abs((long)start.Y - end.Y + 1);
-                return (maxArea, rectangleArea); //1550726012 too low
+                long rectangleArea = CalculateRectangleArea(start, end);
+                return (maxArea, rectangleArea);
             }
 
             return (maxArea, 0);
@@ -123,12 +129,12 @@ namespace AoC_2025
             {
                 var pos = polygon[i];
                 var nextpos = polygon[(i + 1) % polygon.Count];
-                if(pos==start && nextpos==end) continue;
+                //if(pos==start && nextpos==end) continue;
                 // Check if the edge intersects with any of the rectangle's edges
-                if (SectionsIntersects((pos, nextpos), (new Point(minX, minY), new Point(maxX, minY))) ||
-                    SectionsIntersects((pos, nextpos), (new Point(maxX, minY), new Point(maxX, maxY))) ||
-                    SectionsIntersects((pos, nextpos), (new Point(maxX, maxY), new Point(minX, maxY))) ||
-                    SectionsIntersects((pos, nextpos), (new Point(minX, maxY), new Point(minX, minY))))
+                if (Day09_SectionsIntersects((pos, nextpos), (new Point(minX, minY), new Point(maxX, minY))) ||
+                    Day09_SectionsIntersects((pos, nextpos), (new Point(maxX, minY), new Point(maxX, maxY))) ||
+                    Day09_SectionsIntersects((pos, nextpos), (new Point(maxX, maxY), new Point(minX, maxY))) ||
+                    Day09_SectionsIntersects((pos, nextpos), (new Point(minX, maxY), new Point(minX, minY))))
                 {
                     return true; // The rectangle is intersected by the polygon
                 }
@@ -136,53 +142,32 @@ namespace AoC_2025
             return false; // No intersection found
         }
 
-        private static bool SectionsIntersects((Point start, Point end) section1, (Point start, Point end) section2)
+        public static bool Day09_SectionsIntersects((Point start, Point end) section1, (Point start, Point end) section2)
         {
-            // Helper function to check orientation
-            int Orientation(Point p, Point q, Point r)
+            if (section1.start.X == section1.end.X && section2.start.X == section2.end.X)
             {
-                long val = ((long)q.Y - p.Y) * ((long)r.X - q.X) - ((long)q.X - p.X) * ((long)r.Y - q.Y);
-                if (val == 0) return 0; // colinear
-                return (val > 0) ? 1 : 2; // clock or counterclock wise
+                // Both vertical
+                return false;
+            }
+            else if(section1.start.Y == section1.end.Y && section2.start.Y == section2.end.Y)
+            {
+                // Both horizontal
+                return false;
+            }
+            else if (section1.start.X == section1.end.X)
+            {
+                // section1 is vertical, section2 is horizontal
+                return (Math.Min(section2.start.X, section2.end.X) < section1.start.X && section1.start.X < Math.Max(section2.start.X, section2.end.X)) &&
+                       (Math.Min(section1.start.Y, section1.end.Y) < section2.start.Y && section2.start.Y < Math.Max(section1.start.Y, section1.end.Y));
+            }
+            else
+            {
+                // section1 is horizontal, section2 is vertical
+                return (Math.Min(section1.start.X, section1.end.X) < section2.start.X && section2.start.X < Math.Max(section1.start.X, section1.end.X)) &&
+                       (Math.Min(section2.start.Y, section2.end.Y) < section1.start.Y && section1.start.Y < Math.Max(section2.start.Y, section2.end.Y));
             }
 
-            // Helper function to check if point q lies on segment pr
-            bool OnSegment(Point p, Point q, Point r)
-            {
-                return q.X < Math.Max(p.X, r.X) && q.X > Math.Min(p.X, r.X) &&
-                       q.Y < Math.Max(p.Y, r.Y) && q.Y > Math.Min(p.Y, r.Y);
-            }
-
-            Point p1 = section1.start, q1 = section1.end;
-            Point p2 = section2.start, q2 = section2.end;
-
-            int o1 = Orientation(p1, q1, p2);
-            int o2 = Orientation(p1, q1, q2);
-            int o3 = Orientation(p2, q2, p1);
-            int o4 = Orientation(p2, q2, q1);
-
-            // General case
-            if(o1!=0 && o2 !=0 && o3 !=0 && o4 !=0)
-            {
-                if (o1 != o2 && o3 != o4)
-                    return true;
-            }
-           
-
-            // Special Cases
-            // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-            if (o1 == 0 && OnSegment(p1, p2, q1)) return true;
-
-            // p1, q1 and q2 are colinear and q2 lies on segment p1q1
-            if (o2 == 0 && OnSegment(p1, q2, q1)) return true;
-
-            // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-            if (o3 == 0 && OnSegment(p2, p1, q2)) return true;
-
-            // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-            if (o4 == 0 && OnSegment(p2, q1, q2)) return true;
-
-            return false;
+            //return false;
         }
 
         public static bool Day09_RectangleContainsPolygon(Point start, Point end, Day09_Input polygon)
@@ -201,22 +186,22 @@ namespace AoC_2025
             return false; // All vertices of the polygon are outside the rectangle
         }
 
-        private static long CalculateArea(Day09_Input input)
-        {
+        //private static long CalculateArea(Day09_Input input)
+        //{
 
-            long doublearea = 0;
-            long numOfPoints = 0;
-            for (var i = 0; i < input.Count; i++)
-            {
-                var pos = input[i];
-                var nextpos = input[(i + 1) % input.Count];
-                doublearea += (long)pos.X * nextpos.Y;
-                doublearea -= (long)nextpos.X * pos.Y;
-                numOfPoints += (Math.Abs(nextpos.X - pos.X) + Math.Abs(nextpos.Y - pos.Y) );
-            }
-            Debug.Assert(doublearea % 2 == 0);
-            return (long)(doublearea / 2) + numOfPoints / 2 + 1;
-        }
+        //    long doublearea = 0;
+        //    long numOfPoints = 0;
+        //    for (var i = 0; i < input.Count; i++)
+        //    {
+        //        var pos = input[i];
+        //        var nextpos = input[(i + 1) % input.Count];
+        //        doublearea += (long)pos.X * nextpos.Y;
+        //        doublearea -= (long)nextpos.X * pos.Y;
+        //        numOfPoints += (Math.Abs(nextpos.X - pos.X) + Math.Abs(nextpos.Y - pos.Y));
+        //    }
+        //    Debug.Assert(doublearea % 2 == 0);
+        //    return (long)(doublearea / 2) + numOfPoints / 2 + 1;
+        //}
     }
     public class Day09_Test
     {
@@ -237,7 +222,7 @@ namespace AoC_2025
         }
 
         [Theory]
-        [InlineData(1,1, 10,10, 2,2, true)]
+        [InlineData(1, 1, 10, 10, 2, 2, true)]
         [InlineData(1, 1, 10, 10, 9, 9, true)]
         [InlineData(1, 1, 10, 10, -1, 2, false)]
         [InlineData(1, 1, 10, 10, 2, -1, false)]
@@ -246,9 +231,35 @@ namespace AoC_2025
         [InlineData(1, 1, 10, 10, 1, 10, false)]
         [InlineData(1, 1, 10, 10, 10, 1, false)]
         [InlineData(1, 1, 10, 10, 10, 10, false)]
-        public static void Day09RectangleContainsPolygonTest(int RectStartX, int RectStartY, int RectEndX, int RectEndY, int PointToTestX, int PointToTestY, bool expectedResult)
+        public static void Day09_RectangleContainsPolygonTest(int RectStartX, int RectStartY, int RectEndX, int RectEndY, int PointToTestX, int PointToTestY, bool expectedResult)
         {
             Assert.Equal(expectedResult, Day09.Day09_RectangleContainsPolygon(new Point(RectStartX, RectStartY), new Point(RectEndX, RectEndY), new Day09.Day09_Input { new Point(PointToTestX, PointToTestY) }));
+        }
+
+        [Theory]
+        [InlineData(1, 1, 1, 10, 2, 1, 2, 10, false)]
+        [InlineData(1, 1, 10, 1, 1, 2, 10, 2, false)]
+        [InlineData(1, 1, 1, 10, 0, 5, 2, 5, true)]
+        [InlineData(1, 1, 10, 1, 5, 0, 5, 2, true)]
+        [InlineData(1, 1, 1, 10, 1, 5, 2, 5, false)]
+        [InlineData(1, 1, 10, 1, 5, 1, 5, 2, false)]
+        [InlineData(1, 1, 1, 10, 0, 5, 1, 5, false)]
+        [InlineData(1, 1, 10, 1, 5, 0, 5, 1, false)]
+        [InlineData(1, 1, 10, 1, 2, 1, 3, 1, false)]
+        [InlineData(1, 1, 10, 1, 1, 1, 3, 1, false)]
+        [InlineData(1, 1, 10, 1, 0, 1, 3, 1, false)]
+        [InlineData(1, 1, 10, 1, 2, 1, 10, 1, false)]
+        [InlineData(1, 1, 10, 1, 2, 1, 11, 1, false)]
+        [InlineData(1, 1, 10, 1, 0, 1, 11, 1, false)]
+        [InlineData(1, 1, 1, 10, 1, 2, 1, 3, false)]
+        [InlineData(1, 1, 1, 10, 1, 1, 1, 3, false)]
+        [InlineData(1, 1, 1, 10, 1, 0, 1, 3, false)]
+        [InlineData(1, 1, 1, 10, 1, 2, 1, 10, false)]
+        [InlineData(1, 1, 1, 10, 1, 2, 1, 11, false)]
+        [InlineData(1, 1, 1, 10, 1, 0, 1, 11, false)]
+        public static void Day09_SectionsIntersects(int Section1SX, int Section1SY, int Section1EX, int Section1EY, int Section2SX, int Section2SY, int Section2EX, int Section2EY, bool expectedResult)
+        {
+            Assert.Equal(expectedResult, Day09.Day09_SectionsIntersects((new Point(Section1SX, Section1SY), new Point(Section1EX, Section1EY)), (new Point(Section2SX, Section2SY), new Point(Section2EX, Section2EY))));
         }
     }
 }
