@@ -71,8 +71,16 @@ namespace AoC_2025
                     maxArea = Math.Max(maxArea, area);
                 }
             }
+            for (var i = 0; i < input.Count - 1; i++)
+            {
+                if (input[i + 1].X - input[i].X == 1 || input[i+1].Y - input[i].Y == 1)
+                {
+                    //it is not handled if a section goes into the area, and immediately turn back. Theoretically this is allowed
+                    throw new Exception();
+                }
+            }
 
-            var polygonArea = CalculateArea(input);
+                var polygonArea = CalculateArea(input);
             var dir = Math.Sign(polygonArea);
             polygonArea = Math.Abs(polygonArea);
 
