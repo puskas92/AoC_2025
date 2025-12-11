@@ -43,20 +43,23 @@ namespace AoC_2025
         }
 
 
-        public static int Day11_Part1(Day11_Input input)
+        public static long Day11_Part1(Day11_Input input)
         {
 
             return Day11_RecursiveGetRoutesToOut(input, "you")["out"];
         }
 
-        public static Dictionary<string,int> Day11_RecursiveGetRoutesToOut(Day11_Input input, string startPoint, string exitPoint="out", string skipElement ="")
+        private static Dictionary<(string,string,string), Dictionary<string,long>> memoizationCache = new Dictionary<(string,string, string), Dictionary<string, long>>();
+        public static Dictionary<string,long> Day11_RecursiveGetRoutesToOut(Day11_Input input, string startPoint, string exitPoint="out", string skipElement ="")
         {
-            if(startPoint == skipElement) return new Dictionary<string, int>();
+            if(startPoint == skipElement) return new Dictionary<string, long>();
 
-            if (!input.ContainsKey(startPoint)) return new Dictionary<string, int>();
+            if (!input.ContainsKey(startPoint)) return new Dictionary<string, long>();
+
+            if (memoizationCache.ContainsKey((startPoint, exitPoint,skipElement))) return memoizationCache[(startPoint, exitPoint, skipElement)];
 
             var start = input[startPoint];
-            var result = new Dictionary<string,int>();
+            var result = new Dictionary<string,long>();
             foreach(var dest in start)
             {
                 if (dest == exitPoint)
@@ -72,26 +75,26 @@ namespace AoC_2025
                 }
    
             }
-
+            memoizationCache.Add((startPoint, exitPoint, skipElement), result);
             return result;
         }
 
         public static long Day11_Part2(Day11_Input input)
         {
-            int svr_fft = 0;
-            int svr_dac = 0;
-            int fft_dac = 0;
-            int dac_fft = 0;
-            int fft_out = 0;
-            int dac_out = 0;
-           Day11_RecursiveGetRoutesToOut(input, "svr","fft", "dac").TryGetValue("fft", out svr_fft);
-             Day11_RecursiveGetRoutesToOut(input, "svr", "dac", "fft").TryGetValue("dac", out svr_dac);
+            long svr_fft = 0;
+            long svr_dac = 0;
+            long fft_dac = 0;
+            long dac_fft = 0;
+            long fft_out = 0;
+            long dac_out = 0;
+            Day11_RecursiveGetRoutesToOut(input, "svr", "fft", "dac").TryGetValue("fft", out svr_fft);
+            Day11_RecursiveGetRoutesToOut(input, "svr", "dac", "fft").TryGetValue("dac", out svr_dac);
             Day11_RecursiveGetRoutesToOut(input, "fft", "dac", "out").TryGetValue("dac", out fft_dac);
-             Day11_RecursiveGetRoutesToOut(input, "dac", "fft", "out").TryGetValue("fft", out dac_fft);
-             Day11_RecursiveGetRoutesToOut(input, "fft", "out", "dac").TryGetValue("out", out fft_out);
+            Day11_RecursiveGetRoutesToOut(input, "dac", "fft", "out").TryGetValue("fft", out dac_fft);
+            Day11_RecursiveGetRoutesToOut(input, "fft", "out", "dac").TryGetValue("out", out fft_out);
             Day11_RecursiveGetRoutesToOut(input, "dac", "out", "fft").TryGetValue("out", out dac_out);
 
-            return (long)svr_fft * fft_dac * dac_out + (long)svr_dac * dac_fft * fft_out;
+            return svr_fft * fft_dac * dac_out + svr_dac * dac_fft * fft_out;
         }
 
 
@@ -100,7 +103,7 @@ namespace AoC_2025
     {
         [Theory]
         [InlineData("aaa: you hhh\r\nyou: bbb ccc\r\nbbb: ddd eee\r\nccc: ddd eee fff\r\nddd: ggg\r\neee: out\r\nfff: out\r\nggg: out\r\nhhh: ccc fff iii\r\niii: out", 5)]
-        public static void Day11Part1Test(string rawinput, int expectedValue)
+        public static void Day11Part1Test(string rawinput, long expectedValue)
         {
             Assert.Equal(expectedValue, Day11.Day11_Part1(Day11.Day11_ReadInput(rawinput)));
         }
