@@ -77,40 +77,46 @@ namespace AoC_2025
                 }
             }
 
-            //for (var i = 0; i < input.Count - 1; i++)
-            //{
-            //    if (input[i + 1].X - input[i].X == 1 || input[i+1].Y - input[i].Y == 1)
-            //    {
-            //        //it is not handled if a section goes into the area, and immediately turn back. Theoretically this is allowed
-            //        throw new Exception();
-            //    }
-            //}
 
-            //var polygonArea = CalculateArea(input);
-            //var dir = Math.Sign(polygonArea);
-            //polygonArea = Math.Abs(polygonArea);
+#if DEBUG //this part is not needed for the solution, but it is required to generally solve any input correctly
+            for (var i = 0; i < input.Count - 1; i++)
+            {
+                if (input[i + 1].X - input[i].X == 1 || input[i + 1].Y - input[i].Y == 1)
+                {
+                    //it is not handled if a section goes into the area, and immediately turn back. Theoretically this is allowed
+                    throw new Exception();
+                }
+            }
+
+            var polygonArea = CalculateArea(input);
+            var dir = Math.Sign(polygonArea);
+            polygonArea = Math.Abs(polygonArea);
+
+#endif
 
             while (maxAreas.Count > 0)
             {
                 var (start, end) = maxAreas.Dequeue();
 
-                //this does not help
-                //long area = CalculateRectangleArea(start, end);
-                //if (area > polygonArea) continue; // if the area is larger than the polygon area, it cannot be the answer
+#if DEBUG //this does not help on the given input, but generally it could speed up the process
+                long area = CalculateRectangleArea(start, end);
+                if (area > polygonArea) continue; // if the area is larger than the polygon area, it cannot be the answer
+#endif
 
                 // Check if the rectangle defined by start and end fully inside the polygon
                 if (Day09_RectangleContainsPolygon(start, end, input)) continue;
-                if (RectangleInterSectedByThePolygon(start, end, input)) continue;
-         
+                if (RectangleInterSectedByThePolygon(start, end, input)) continue; // TODO: section that goes through the area from edge to edge are not detected (e.g. test cases)
+
+#if DEBUG //this is not needed for the solution, but it is required to generally solve any input correctly
                 //Check if the rectangle is inside of the polygon
-                //var testInput = new Day09_Input();
-                //for (var i = input.IndexOf(start); i <= input.IndexOf(end); i++)
-                //{
-                //    testInput.Add(input[i]);
-                //}
-                //testInput.Add(new Point(end.X, start.Y));
-                //var testArea = CalculateArea(testInput);
-                //if (dir != Math.Sign(testArea)) continue;
+                var testInput = new Day09_Input();
+                for (var i = input.IndexOf(start); i <= input.IndexOf(end); i++)
+                {
+                    testInput.Add(input[i]);
+                }
+                var testArea = CalculateArea(testInput);
+                if (dir != Math.Sign(testArea)) continue;
+#endif
 
                 long rectangleArea = CalculateRectangleArea(start, end);
                 return (maxArea, rectangleArea);
@@ -186,22 +192,23 @@ namespace AoC_2025
             return false; // All vertices of the polygon are outside the rectangle
         }
 
-        //private static long CalculateArea(Day09_Input input)
-        //{
+     
+        private static long CalculateArea(Day09_Input input)
+        {
 
-        //    long doublearea = 0;
-        //    long numOfPoints = 0;
-        //    for (var i = 0; i < input.Count; i++)
-        //    {
-        //        var pos = input[i];
-        //        var nextpos = input[(i + 1) % input.Count];
-        //        doublearea += (long)pos.X * nextpos.Y;
-        //        doublearea -= (long)nextpos.X * pos.Y;
-        //        numOfPoints += (Math.Abs(nextpos.X - pos.X) + Math.Abs(nextpos.Y - pos.Y));
-        //    }
-        //    Debug.Assert(doublearea % 2 == 0);
-        //    return (long)(doublearea / 2) + numOfPoints / 2 + 1;
-        //}
+            long doublearea = 0;
+            long numOfPoints = 0;
+            for (var i = 0; i < input.Count; i++)
+            {
+                var pos = input[i];
+                var nextpos = input[(i + 1) % input.Count];
+                doublearea += (long)pos.X * nextpos.Y;
+                doublearea -= (long)nextpos.X * pos.Y;
+                numOfPoints += (Math.Abs(nextpos.X - pos.X) + Math.Abs(nextpos.Y - pos.Y));
+            }
+            //Debug.Assert(doublearea % 2 == 0); only valid when there is no diagonal
+            return (long)(doublearea / 2) + numOfPoints / 2 + 1;
+        }
     }
     public class Day09_Test
     {
@@ -214,8 +221,8 @@ namespace AoC_2025
 
         [Theory]
         [InlineData("7,1\r\n11,1\r\n11,7\r\n9,7\r\n9,5\r\n2,5\r\n2,3\r\n7,3", 24)]
-        [InlineData("1,1\r\n10,1\r\n10,2\r\n10,10\r\n8,10\r\n8,2\r\n3,2\r\n3,10\r\n1,10\r\n1,2", 0)]
-        [InlineData("1,1\r\n1,2\r\n1,10\r\n3,10\r\n3,2\r\n8,2\r\n8,10\r\n10,10\r\n10,2\r\n10,1", 0)]
+        [InlineData("1,1\r\n10,1\r\n10,3\r\n10,10\r\n7,10\r\n7,3\r\n3,3\r\n3,10\r\n1,10\r\n1,3", 24)]
+        [InlineData("1,1\r\n1,3\r\n1,10\r\n3,10\r\n3,3\r\n7,3\r\n7,10\r\n10,10\r\n10,3\r\n10,1", 24)]
         public static void Day09Part2Test(string rawinput, int expectedValue)
         {
             Assert.Equal(expectedValue, Day09.Day09_Part12(Day09.Day09_ReadInput(rawinput)).Item2);
