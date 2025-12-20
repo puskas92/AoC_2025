@@ -99,7 +99,6 @@ namespace AoC_2025
                 Console.WriteLine("To check manually: " + region.ToString() + " Area: " + regionArea + " pixel: " + minPixel + " maxPixel: " + maxPixel );
 
             }
-            Console.WriteLine($"Day12 Part1: {result}");
             return result;
         }
     }
